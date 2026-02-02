@@ -1,0 +1,9 @@
+# CHOTANENGINE - Cube material
+newmtl CubeMat
+Ka 1.000 1.000 1.000
+Kd 1.000 1.000 1.000
+Ks 0.000 0.000 0.000
+Ns 1.0
+
+# diffuse texture (relative path from assets/models/)
+map_Kd ../textures/crate.png

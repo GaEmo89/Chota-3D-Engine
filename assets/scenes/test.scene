@@ -1,0 +1,25 @@
+# CHOTANENGINE test scene
+
+entity Cube1
+pos 0 0 0
+rot 0 0 0
+scale 1 1 1
+model assets/models/model.obj
+fallback assets/textures/crate.png
+end
+
+entity Cube2
+pos 2 0 0
+rot 0 45 0
+scale 0.7 0.7 0.7
+model assets/models/model.obj
+fallback assets/textures/crate.png
+end
+
+entity Cube3
+pos -2 0 0
+rot 0 -30 0
+scale 1.2 0.4 1.2
+model assets/models/model.obj
+fallback assets/textures/crate.png
+end
