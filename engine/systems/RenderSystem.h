@@ -3,8 +3,6 @@
 #include <string>
 #include <unordered_map>
 
-#include <glm/glm.hpp>
-
 class Registry;
 class Camera;
 class ModelRenderer;
@@ -16,7 +14,6 @@ public:
                                              const std::string& fallbackTexture);
 
 private:
-    // Key: objPath + "|" + fallbackTexture
     std::unordered_map<std::string, std::shared_ptr<ModelRenderer>> m_ModelCache;
 };
 

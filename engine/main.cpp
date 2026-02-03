@@ -10,6 +10,7 @@
 
 #include "components/Transform.h"
 #include "components/PlayerControllerComponent.h"
+#include "components/RigidBodyComponent.h"
 #include "systems/PlayerControllerSystem.h"
 
 static void FramebufferSizeCallback(GLFWwindow*, int w, int h)
@@ -45,30 +46,32 @@ int main()
 
     Camera camera(75.0f, 1280.0f / 720.0f, 0.1f, 200.0f);
 
-    // =========================
-    // ECS + Systems
-    // =========================
+    // ECS + systems
     Registry reg;
     RenderSystem renderSystem;
     PlayerControllerSystem playerSystem;
 
-    // =========================
-    // Load Scene (spawnea cubos/props)
-    // =========================
+    // Load scene (props)
     SceneLoader::Load("assets/scenes/test.scene", reg, renderSystem);
 
-    // =========================
-    // Create Player entity
-    // =========================
+    // Create Player
     Entity player = reg.Create();
 
     auto& pt = reg.Add<Transform>(player);
-    pt.Position = { 0.0f, 1.0f, 3.0f };   // altura tipo FPS
-    pt.Scale    = { 1.0f, 1.0f, 1.0f };
+    pt.Position = { 0.0f, 1.0f, 3.0f };
+    pt.Scale = { 1.0f, 1.0f, 1.0f };
 
     auto& pc = reg.Add<PlayerControllerComponent>(player);
     pc.MoveSpeed = 6.0f;
     pc.MouseSensitivity = 0.12f;
+    pc.Gravity = -18.0f;
+    pc.JumpSpeed = 7.5f;
+    pc.GroundY = 0.0f;
+    pc.PlayerHeight = 1.0f;
+
+    auto& rb = reg.Add<RigidBodyComponent>(player);
+    rb.Velocity = { 0.0f, 0.0f, 0.0f };
+    rb.Grounded = false;
 
     float last = (float)glfwGetTime();
 
@@ -81,26 +84,21 @@ int main()
         glfwPollEvents();
         Input::Update();
 
-        if (Input::KeyDown(GLFW_KEY_ESCAPE))
+        if (Input::KeyPressed(GLFW_KEY_ESCAPE))
             glfwSetWindowShouldClose(window, true);
 
-        // =========================
         // Update gameplay
-        // =========================
         playerSystem.Update(reg, dt);
 
-        // Cámara pegada al player (FPS)
+        // Camera = player pos + view angles
         auto& pctr = reg.Get<Transform>(player);
         auto& pcc  = reg.Get<PlayerControllerComponent>(player);
 
         camera.SetPosition(pctr.Position);
         camera.SetYawPitch(pcc.Yaw, pcc.Pitch);
 
-        // =========================
         // Render
-        // =========================
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         renderSystem.Render(reg, camera, now);
 
         glfwSwapBuffers(window);

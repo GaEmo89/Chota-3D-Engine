@@ -6,16 +6,6 @@
 
 #include "Entity.h"
 
-// ==============================
-// Minimal ECS Registry (fixed for MSVC)
-//
-// - create entities
-// - add/get/has components by type T
-// - view entities with component T
-//
-// Storage is static per component type.
-// ==============================
-
 class Registry
 {
 public:

@@ -8,7 +8,8 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include <cctype>
+
+#include <glm/glm.hpp>
 
 static std::string Trim(const std::string& s)
 {
@@ -36,11 +37,9 @@ static void SpawnPending(PendingEntity& p, Registry& reg, RenderSystem& renderer
 {
     if (!p.hasEntity) return;
 
-    // Must have model + fallback
     if (p.modelPath.empty() || p.fallbackTex.empty())
     {
-        std::cout << "[SCENE] Skip entity '" << p.name
-                  << "' (missing model/fallback)\n";
+        std::cout << "[SCENE] Skip entity '" << p.name << "' (missing model/fallback)\n";
         p = PendingEntity{};
         return;
     }
@@ -75,8 +74,7 @@ bool SceneLoader::Load(const std::string& scenePath, Registry& reg, RenderSystem
     while (std::getline(file, line))
     {
         line = Trim(line);
-        if (line.empty()) continue;
-        if (line[0] == '#') continue;
+        if (line.empty() || line[0] == '#') continue;
 
         std::stringstream ss(line);
         std::string cmd;
@@ -84,7 +82,6 @@ bool SceneLoader::Load(const std::string& scenePath, Registry& reg, RenderSystem
 
         if (cmd == "entity")
         {
-            // If previous entity wasn’t ended, spawn it
             SpawnPending(pending, reg, renderer);
 
             pending = PendingEntity{};
@@ -126,8 +123,6 @@ bool SceneLoader::Load(const std::string& scenePath, Registry& reg, RenderSystem
         }
     }
 
-    // If file ended without "end"
     SpawnPending(pending, reg, renderer);
-
     return true;
 }

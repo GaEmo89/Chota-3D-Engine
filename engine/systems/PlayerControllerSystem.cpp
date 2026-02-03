@@ -3,10 +3,10 @@
 #include "ecs/Registry.h"
 #include "components/Transform.h"
 #include "components/PlayerControllerComponent.h"
+#include "components/RigidBodyComponent.h"
 #include "core/Input.h"
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
 
 static glm::vec3 ForwardFromYawPitch(float yawDeg, float pitchDeg)
@@ -20,39 +20,31 @@ static glm::vec3 ForwardFromYawPitch(float yawDeg, float pitchDeg)
 
 void PlayerControllerSystem::Update(Registry& reg, float dt)
 {
-    // Controla TODAS las entidades con PlayerControllerComponent
     for (Entity e : reg.View<PlayerControllerComponent>())
     {
         auto& pc = reg.Get<PlayerControllerComponent>(e);
         auto& tr = reg.Get<Transform>(e);
 
+        // Ensure rigidbody exists
+        if (!reg.Has<RigidBodyComponent>(e))
+            reg.Add<RigidBodyComponent>(e);
+
+        auto& rb = reg.Get<RigidBodyComponent>(e);
+
+        // =========================
         // Mouse look (yaw/pitch)
-        static bool firstMouse = true;
-        static double lastX = 0.0, lastY = 0.0;
-
-        double mx = Input::MouseX();
-        double my = Input::MouseY();
-
-        if (firstMouse)
-        {
-            lastX = mx; lastY = my;
-            firstMouse = false;
-        }
-
-        float dx = (float)(mx - lastX) * pc.MouseSensitivity;
-        float dy = (float)(lastY - my) * pc.MouseSensitivity;
-
-        lastX = mx;
-        lastY = my;
-
-        pc.Yaw += dx;
-        pc.Pitch += dy;
+        // =========================
+        // Usamos deltas de Input para que sea suave y sin “firstMouse” raro
+        pc.Yaw   += (float)Input::MouseDeltaX() * pc.MouseSensitivity;
+        pc.Pitch += (float)(-Input::MouseDeltaY()) * pc.MouseSensitivity;
 
         if (pc.Pitch > 89.0f) pc.Pitch = 89.0f;
         if (pc.Pitch < -89.0f) pc.Pitch = -89.0f;
 
-        // Movimiento SOLO en XZ (pitch=0) para que no “vuele”
-        glm::vec3 forward = ForwardFromYawPitch(pc.Yaw, 0.0f);
+        // =========================
+        // Horizontal movement (XZ)
+        // =========================
+        glm::vec3 forward = ForwardFromYawPitch(pc.Yaw, 0.0f); // pitch=0 => no vuelas
         glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0, 1, 0)));
 
         glm::vec3 move(0.0f);
@@ -66,7 +58,39 @@ void PlayerControllerSystem::Update(Registry& reg, float dt)
 
         tr.Position += move * pc.MoveSpeed * dt;
 
-        // opcional: si el player tuviera modelo visible, lo giramos con yaw
+        // =========================
+        // Ground check (simple plane)
+        // feet at y = position.y - PlayerHeight
+        // =========================
+        float feetY = tr.Position.y - pc.PlayerHeight;
+
+        if (feetY <= pc.GroundY)
+        {
+            tr.Position.y = pc.GroundY + pc.PlayerHeight;
+            rb.Velocity.y = 0.0f;
+            rb.Grounded = true;
+        }
+        else
+        {
+            rb.Grounded = false;
+        }
+
+        // =========================
+        // Jump
+        // =========================
+        if (rb.Grounded && Input::KeyPressed(GLFW_KEY_SPACE))
+        {
+            rb.Velocity.y = pc.JumpSpeed;
+            rb.Grounded = false;
+        }
+
+        // =========================
+        // Gravity & integrate Y
+        // =========================
+        rb.Velocity.y += pc.Gravity * dt;
+        tr.Position.y += rb.Velocity.y * dt;
+
+        // Optional: align “body” yaw
         tr.RotationEulerDeg.y = pc.Yaw;
     }
 }

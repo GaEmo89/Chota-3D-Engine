@@ -18,6 +18,7 @@ add_executable(engine
     engine/core/Input.cpp
     engine/math/Camera.cpp
 
+    # renderer (ya los tienes)
     engine/renderer/Shader.cpp
     engine/renderer/Texture.cpp
     engine/renderer/Mesh.cpp
@@ -26,9 +27,11 @@ add_executable(engine
     engine/renderer/Model.cpp
     engine/renderer/ModelRenderer.cpp
 
+    # systems
     engine/systems/RenderSystem.cpp
     engine/systems/PlayerControllerSystem.cpp
 
+    # scene
     engine/scene/SceneLoader.cpp
 )
 
